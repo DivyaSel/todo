@@ -1,0 +1,16 @@
+<template>
+        <div class="col-lg-2 input-group marginTop">
+        </div>
+
+            <div class="well well-sm" style="text-align:center">
+                <h1><img height="50px" width="50px" src="img/todolist.jpg"/>
+                    ${message}
+                    <span show.bind="!showLogon" class="glyphicon glyphicon-arrow-left pull-right" style="font-size:20px;margin-top:5px" click.trigger="showRegister()">
+	        </span></h1>
+                </div>
+                
+    <div class="marginTop" >
+        <compose show.bind="showLogon" view="./components/login.html"></compose>
+        <compose show.bind="!showLogon" view="./components/register.html"></compose>
+    </div>
+</template>
