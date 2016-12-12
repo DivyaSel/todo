@@ -34,8 +34,8 @@ define('app',['exports', 'aurelia-framework', 'aurelia-auth'], function (exports
         moduleId: './modules/home',
         name: 'Home'
       }, {
-        route: 'wall',
-        moduleId: './modules/wall',
+        route: 'list',
+        moduleId: './modules/list',
         name: 'Wall',
         auth: true
       }]);
@@ -186,7 +186,7 @@ define('modules/home',['exports', 'aurelia-framework', 'aurelia-router', 'aureli
       return this.auth.login(this.email, this.password).then(function (response) {
         sessionStorage.setItem("user", JSON.stringify(response.user));
         _this.loginError = "";
-        _this.router.navigate('wall');
+        _this.router.navigate('list');
       }).catch(function (error) {
         console.log(error);
         _this.loginError = "Invalid credentials.";
@@ -266,13 +266,13 @@ define('modules/home',['exports', 'aurelia-framework', 'aurelia-router', 'aureli
     return a.password;
   }).required().on(Home);
 });
-define('modules/wall',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-auth', '../resources/data/todolist', '../resources/data/users', 'aurelia-validation', '../resources/utils/bootstrap-form-renderer'], function (exports, _aureliaFramework, _aureliaRouter, _aureliaAuth, _todolist, _users, _aureliaValidation, _bootstrapFormRenderer) {
+define('modules/list',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-auth', '../resources/data/todolist', '../resources/data/users'], function (exports, _aureliaFramework, _aureliaRouter, _aureliaAuth, _todolist, _users) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  exports.Wall = undefined;
+  exports.List = undefined;
 
   function _asyncToGenerator(fn) {
     return function () {
@@ -311,9 +311,9 @@ define('modules/wall',['exports', 'aurelia-framework', 'aurelia-router', 'aureli
 
   var _dec, _class;
 
-  var Wall = exports.Wall = (_dec = (0, _aureliaFramework.inject)(_aureliaRouter.Router, _aureliaAuth.AuthService, _todolist.Todos, _users.Users, _aureliaValidation.ValidationControllerFactory), _dec(_class = function () {
-    function Wall(router, auth, todos, users, controllerFactory) {
-      _classCallCheck(this, Wall);
+  var List = exports.List = (_dec = (0, _aureliaFramework.inject)(_aureliaRouter.Router, _aureliaAuth.AuthService, _todolist.Todos, _users.Users), _dec(_class = function () {
+    function List(router, auth, todos, users) {
+      _classCallCheck(this, List);
 
       this.DATE_FORMAT_TABLE = "MM/DD/YYYY";
       this.DATE_FORMAT_CONTROL = "YYYY-MM-DD";
@@ -323,17 +323,15 @@ define('modules/wall',['exports', 'aurelia-framework', 'aurelia-router', 'aureli
       this.todos = todos;
       this.users = users;
       this.auth = auth;
-      this.newTodoTask;this.newTodoDueDate;this.newTodoPriority;
-      this.wallMessage = "";
+      this.listMessage = "";
       this.saveStatus = "";
-      this.createNewTodo = false;
       this.priorities = ['High', 'Medium', 'Low'];
       this.hidecomplete = false;
-      this.controller = controllerFactory.createForCurrentScope();
-      this.controller.addRenderer(new _bootstrapFormRenderer.BootstrapFormRenderer());
+      this.todoSelected = false;
+      this.saveError = "";
     }
 
-    Wall.prototype.activate = function () {
+    List.prototype.activate = function () {
       var _ref = _asyncToGenerator(regeneratorRuntime.mark(function _callee() {
         var serverResponse;
         return regeneratorRuntime.wrap(function _callee$(_context) {
@@ -349,7 +347,7 @@ define('modules/wall',['exports', 'aurelia-framework', 'aurelia-router', 'aureli
                 serverResponse = _context.sent;
 
                 if (serverResponse.error) {
-                  this.wallMessage = "Error retrieving tasks";
+                  this.listMessage = "Error retrieving tasks";
                 }
 
               case 6:
@@ -367,7 +365,7 @@ define('modules/wall',['exports', 'aurelia-framework', 'aurelia-router', 'aureli
       return activate;
     }();
 
-    Wall.prototype.refresh = function () {
+    List.prototype.refresh = function () {
       var _ref2 = _asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
@@ -391,57 +389,57 @@ define('modules/wall',['exports', 'aurelia-framework', 'aurelia-router', 'aureli
       return refresh;
     }();
 
-    Wall.prototype.createTodoClick = function createTodoClick() {
-      this.newTodoDueDate = new Date(new Date().toDateString());
-      this.createNewTodo = true;
+    List.prototype.cancelTodoSelection = function cancelTodoSelection() {
+      this.todoSelected = false;
+      this.saveError = "";
     };
 
-    Wall.prototype.cancelCreateTodo = function cancelCreateTodo() {
-      this.createNewTodo = false;
+    List.prototype.createTodoClick = function createTodoClick() {
+      this.todos.selectTodo();
+      this.todoSelected = true;
     };
 
-    Wall.prototype.createTodo = function () {
+    List.prototype.save = function () {
       var _ref3 = _asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
-        var result, todo, serverResponse;
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
-                _context3.next = 2;
-                return this.controller.validate();
-
-              case 2:
-                result = _context3.sent;
-
-                if (!this.newTodoTask) {
-                  _context3.next = 9;
+                if (!(this.todos.selectedTodo.task.length > 0)) {
+                  _context3.next = 14;
                   break;
                 }
 
-                todo = {
-                  task: this.newTodoTask,
-                  user: this.user._id,
-                  taskAuthor: this.user._id,
-                  duedate: this.newTodoDueDate,
-                  priority: this.newTodoPriority
-                };
-                _context3.next = 7;
-                return this.todos.saveTodo(todo);
-
-              case 7:
-                serverResponse = _context3.sent;
-
-                if (serverResponse && !serverResponse.error) {
-                  this.newTodoTask = "";this.newTodoDueDate = "";this.newTodoPriority = "";
-                  this.saveStatus = "";
-                  this.createNewTodo = false;
-                  this.todos.todoArray[0].todoAuthor = new Object();
-                  this.todos.todoArray[0].todoAuthor = { email: this.user.email, firstName: this.user.firstName, lastName: this.user.lastName, screenName: this.user.screenName };
-                } else {
-                  this.saveStatus = "Error saving todo";
+                if (!this.todos.selectedTodo._id) {
+                  _context3.next = 6;
+                  break;
                 }
 
-              case 9:
+                _context3.next = 4;
+                return this.todos.updateTodo();
+
+              case 4:
+                _context3.next = 10;
+                break;
+
+              case 6:
+                this.todos.selectedTodo.taskAuthor = this.user._id;
+                if (this.todos.selectedTodo.priority == "") {
+                  this.todos.selectedTodo.priority = "Medium";
+                }
+                _context3.next = 10;
+                return this.todos.saveTodo();
+
+              case 10:
+                this.todoSelected = false;
+                this.saveError = "";
+                _context3.next = 15;
+                break;
+
+              case 14:
+                this.saveError = "Task should not be empty";
+
+              case 15:
               case 'end':
                 return _context3.stop();
             }
@@ -449,34 +447,39 @@ define('modules/wall',['exports', 'aurelia-framework', 'aurelia-router', 'aureli
         }, _callee3, this);
       }));
 
-      function createTodo() {
+      function save() {
         return _ref3.apply(this, arguments);
       }
 
-      return createTodo;
+      return save;
     }();
 
-    Wall.prototype.completeTodo = function () {
+    List.prototype.edit = function edit(index) {
+      this.todos.selectTodo(index);
+      this.todoSelected = true;
+    };
+
+    List.prototype.completeTodo = function () {
       var _ref4 = _asyncToGenerator(regeneratorRuntime.mark(function _callee4(todo) {
         var serverResponse;
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
               case 0:
-                todo.complete = true;
-                _context4.next = 3;
-                return this.todos.updateTodo(todo);
+                _context4.next = 2;
+                return this.todos.completeUpdate(todo);
 
-              case 3:
+              case 2:
                 serverResponse = _context4.sent;
 
                 if (serverResponse && !serverResponse.error) {
                   this.saveStatus = "";
+                  todo = serverResponse;
                 } else {
                   this.saveStatus = "Error saving complete";
                 }
 
-              case 5:
+              case 4:
               case 'end':
                 return _context4.stop();
             }
@@ -491,7 +494,7 @@ define('modules/wall',['exports', 'aurelia-framework', 'aurelia-router', 'aureli
       return completeTodo;
     }();
 
-    Wall.prototype.deleteTask = function () {
+    List.prototype.deleteTask = function () {
       var _ref5 = _asyncToGenerator(regeneratorRuntime.mark(function _callee5(todo, index) {
         var serverResponse;
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
@@ -525,25 +528,17 @@ define('modules/wall',['exports', 'aurelia-framework', 'aurelia-router', 'aureli
       return deleteTask;
     }();
 
-    Wall.prototype.logout = function logout() {
+    List.prototype.logout = function logout() {
       sessionStorage.removeItem('user');
       this.auth.logout();
     };
 
-    Wall.prototype.home = function home() {
+    List.prototype.home = function home() {
       this.router.navigate('home');
     };
 
-    return Wall;
+    return List;
   }()) || _class);
-
-  _aureliaValidation.ValidationRules.ensure(function (a) {
-    return a.newTodoTask;
-  }).required().ensure(function (a) {
-    return a.newTodoDueDate;
-  }).required().ensure(function (a) {
-    return a.newTodoPriority;
-  }).required().on(Wall);
 });
 define('resources/index',['exports'], function (exports) {
   'use strict';
@@ -643,13 +638,21 @@ define('resources/data/data-services',['exports', 'aurelia-framework', 'aurelia-
 		return DataServices;
 	}()) || _class);
 });
-define('resources/data/todolist',['exports', 'aurelia-framework', './data-services'], function (exports, _aureliaFramework, _dataServices) {
+define('resources/data/todolist',['exports', 'aurelia-framework', './data-services', 'moment'], function (exports, _aureliaFramework, _dataServices, _moment) {
     'use strict';
 
     Object.defineProperty(exports, "__esModule", {
         value: true
     });
     exports.Todos = undefined;
+
+    var _moment2 = _interopRequireDefault(_moment);
+
+    function _interopRequireDefault(obj) {
+        return obj && obj.__esModule ? obj : {
+            default: obj
+        };
+    }
 
     function _asyncToGenerator(fn) {
         return function () {
@@ -697,7 +700,7 @@ define('resources/data/todolist',['exports', 'aurelia-framework', './data-servic
         }
 
         Todos.prototype.saveTodo = function () {
-            var _ref = _asyncToGenerator(regeneratorRuntime.mark(function _callee(todo) {
+            var _ref = _asyncToGenerator(regeneratorRuntime.mark(function _callee() {
                 var serverResponse;
                 return regeneratorRuntime.wrap(function _callee$(_context) {
                     while (1) {
@@ -705,7 +708,7 @@ define('resources/data/todolist',['exports', 'aurelia-framework', './data-servic
                             case 0:
                                 _context.prev = 0;
                                 _context.next = 3;
-                                return this.data.post(todo, this.data.TODO_SERVICE);
+                                return this.data.post(this.selectedTodo, this.data.TODO_SERVICE);
 
                             case 3:
                                 serverResponse = _context.sent;
@@ -730,7 +733,7 @@ define('resources/data/todolist',['exports', 'aurelia-framework', './data-servic
                 }, _callee, this, [[0, 8]]);
             }));
 
-            function saveTodo(_x) {
+            function saveTodo() {
                 return _ref.apply(this, arguments);
             }
 
@@ -738,7 +741,7 @@ define('resources/data/todolist',['exports', 'aurelia-framework', './data-servic
         }();
 
         Todos.prototype.updateTodo = function () {
-            var _ref2 = _asyncToGenerator(regeneratorRuntime.mark(function _callee2(todo) {
+            var _ref2 = _asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
                 var serverResponse;
                 return regeneratorRuntime.wrap(function _callee2$(_context2) {
                     while (1) {
@@ -746,7 +749,7 @@ define('resources/data/todolist',['exports', 'aurelia-framework', './data-servic
                             case 0:
                                 _context2.prev = 0;
                                 _context2.next = 3;
-                                return this.data.put(todo, this.data.TODO_SERVICE);
+                                return this.data.put(this.selectedTodo, this.data.TODO_SERVICE);
 
                             case 3:
                                 serverResponse = _context2.sent;
@@ -760,93 +763,107 @@ define('resources/data/todolist',['exports', 'aurelia-framework', './data-servic
                                 return _context2.abrupt('return', undefined);
 
                             case 9:
+                                this.todoArray[this.selectedIndex].task = serverResponse.task;
+                                this.todoArray[this.selectedIndex].duedate = serverResponse.duedate;
+                                this.todoArray[this.selectedIndex].dateCreated = serverResponse.dateCreated;
+                                this.todoArray[this.selectedIndex].priority = serverResponse.priority;
+                                this.todoArray[this.selectedIndex].complete = serverResponse.complete;
                                 return _context2.abrupt('return', serverResponse);
 
-                            case 10:
-                                _context2.next = 16;
+                            case 15:
+                                _context2.next = 21;
                                 break;
 
-                            case 12:
-                                _context2.prev = 12;
+                            case 17:
+                                _context2.prev = 17;
                                 _context2.t0 = _context2['catch'](0);
 
                                 console.log(_context2.t0);
                                 return _context2.abrupt('return', undefined);
 
-                            case 16:
+                            case 21:
                             case 'end':
                                 return _context2.stop();
                         }
                     }
-                }, _callee2, this, [[0, 12]]);
+                }, _callee2, this, [[0, 17]]);
             }));
 
-            function updateTodo(_x2) {
+            function updateTodo() {
                 return _ref2.apply(this, arguments);
             }
 
             return updateTodo;
         }();
 
-        Todos.prototype.deleteTodo = function () {
-            var _ref3 = _asyncToGenerator(regeneratorRuntime.mark(function _callee3(index, id) {
-                var url, serverResponse;
+        Todos.prototype.completeUpdate = function () {
+            var _ref3 = _asyncToGenerator(regeneratorRuntime.mark(function _callee3(todo) {
+                var serverResponse;
                 return regeneratorRuntime.wrap(function _callee3$(_context3) {
                     while (1) {
                         switch (_context3.prev = _context3.next) {
                             case 0:
-                                url = this.data.TODO_SERVICE + '/' + id;
-                                _context3.prev = 1;
-                                _context3.next = 4;
-                                return this.data.delete(url);
+                                _context3.prev = 0;
+                                _context3.next = 3;
+                                return this.data.put(todo, this.data.TODO_SERVICE);
 
-                            case 4:
+                            case 3:
                                 serverResponse = _context3.sent;
 
                                 if (!serverResponse.error) {
-                                    this.todoArray.splice(index, 1);
+                                    _context3.next = 9;
+                                    break;
                                 }
-                                return _context3.abrupt('return', serverResponse);
+
+                                console.log(serverResponse.error);
+                                return _context3.abrupt('return', undefined);
 
                             case 9:
-                                _context3.prev = 9;
-                                _context3.t0 = _context3['catch'](1);
+                                return _context3.abrupt('return', serverResponse);
+
+                            case 10:
+                                _context3.next = 16;
+                                break;
+
+                            case 12:
+                                _context3.prev = 12;
+                                _context3.t0 = _context3['catch'](0);
 
                                 console.log(_context3.t0);
                                 return _context3.abrupt('return', undefined);
 
-                            case 13:
+                            case 16:
                             case 'end':
                                 return _context3.stop();
                         }
                     }
-                }, _callee3, this, [[1, 9]]);
+                }, _callee3, this, [[0, 12]]);
             }));
 
-            function deleteTodo(_x3, _x4) {
+            function completeUpdate(_x) {
                 return _ref3.apply(this, arguments);
             }
 
-            return deleteTodo;
+            return completeUpdate;
         }();
 
-        Todos.prototype.getUserstodos = function () {
-            var _ref4 = _asyncToGenerator(regeneratorRuntime.mark(function _callee4(id) {
+        Todos.prototype.deleteTodo = function () {
+            var _ref4 = _asyncToGenerator(regeneratorRuntime.mark(function _callee4(index, id) {
                 var url, serverResponse;
                 return regeneratorRuntime.wrap(function _callee4$(_context4) {
                     while (1) {
                         switch (_context4.prev = _context4.next) {
                             case 0:
-                                url = this.data.TODO_SERVICE + '/usertask/' + id;
+                                url = this.data.TODO_SERVICE + '/' + id;
                                 _context4.prev = 1;
                                 _context4.next = 4;
-                                return this.data.get(url);
+                                return this.data.delete(url);
 
                             case 4:
                                 serverResponse = _context4.sent;
 
                                 if (!serverResponse.error) {
-                                    this.todoArray = serverResponse;
+                                    this.todoArray.splice(index, 1);
                                 }
                                 return _context4.abrupt('return', serverResponse);
 
@@ -865,12 +882,77 @@ define('resources/data/todolist',['exports', 'aurelia-framework', './data-servic
                 }, _callee4, this, [[1, 9]]);
             }));
 
-            function getUserstodos(_x5) {
+            function deleteTodo(_x2, _x3) {
                 return _ref4.apply(this, arguments);
+            }
+
+            return deleteTodo;
+        }();
+
+        Todos.prototype.getUserstodos = function () {
+            var _ref5 = _asyncToGenerator(regeneratorRuntime.mark(function _callee5(id) {
+                var url, serverResponse;
+                return regeneratorRuntime.wrap(function _callee5$(_context5) {
+                    while (1) {
+                        switch (_context5.prev = _context5.next) {
+                            case 0:
+                                url = this.data.TODO_SERVICE + '/usertask/' + id;
+                                _context5.prev = 1;
+                                _context5.next = 4;
+                                return this.data.get(url);
+
+                            case 4:
+                                serverResponse = _context5.sent;
+
+                                if (!serverResponse.error) {
+                                    this.todoArray = serverResponse;
+                                }
+                                return _context5.abrupt('return', serverResponse);
+
+                            case 9:
+                                _context5.prev = 9;
+                                _context5.t0 = _context5['catch'](1);
+
+                                console.log(_context5.t0);
+                                return _context5.abrupt('return', undefined);
+
+                            case 13:
+                            case 'end':
+                                return _context5.stop();
+                        }
+                    }
+                }, _callee5, this, [[1, 9]]);
+            }));
+
+            function getUserstodos(_x4) {
+                return _ref5.apply(this, arguments);
             }
 
             return getUserstodos;
         }();
+
+        Todos.prototype.selectTodo = function selectTodo(index) {
+            if (!index && index != 0) {
+                this.selectedTodo = {
+                    task: "",
+                    priority: "",
+                    duedate: (0, _moment2.default)(new Date()).format("YYYY-MM-DD"),
+
+                    dataCreated: new Date()
+                };
+            } else {
+                this.selectedIndex = index;
+                this.selectedTodo = {
+                    _id: this.todoArray[index]._id,
+                    task: this.todoArray[index].task,
+
+                    duedate: this.todoArray[index].duedate,
+                    dateCreated: this.todoArray[index].dateCreated,
+                    priority: this.todoArray[index].priority,
+                    complete: this.todoArray[index].complete
+                };
+            }
+        };
 
         return Todos;
     }()) || _class);
@@ -4627,9 +4709,9 @@ define('aurelia-validation/implementation/validation-rules',["require", "exports
 });
 
 define('text!app.html', ['module'], function(module) { module.exports = "<template>\n   <div class=\"container\">\n  <router-view></router-view>\n   </div>\n</template>\n\n"; });
-define('text!resources/css/styles.css', ['module'], function(module) { module.exports = ".vertical-align {\r\n    display:flex;\r\n    align-items:center;\r\n}\r\nspan.glyphicon{\r\n    font-size:1em;\r\n}\r\n.marginLeft{\r\n    margin-left: 20px;\r\n}\r\n.marginBottom{\r\n    margin-bottom: 20px;\r\n}\r\n.marginTop{\r\n    margin-top: 20px;\r\n}\r\n.marginRight{\r\n    margin-right: 20px;\r\n}\r\n"; });
 define('text!modules/home.html', ['module'], function(module) { module.exports = "<template>\r\n        <div class=\"col-lg-2 input-group marginTop\">\r\n        </div>\r\n\r\n            <div class=\"well well-sm\" style=\"text-align:center\">\r\n                <h1><img height=\"50px\" width=\"50px\" src=\"img/todolist.jpg\"/>\r\n                    ${message}\r\n                    <span show.bind=\"!showLogon\" class=\"glyphicon glyphicon-arrow-left pull-right\" style=\"font-size:20px;margin-top:5px\" click.trigger=\"showRegister()\">\r\n\t        </span></h1>\r\n                </div>\r\n                \r\n    <div class=\"marginTop\" >\r\n        <compose show.bind=\"showLogon\" view=\"./components/login.html\"></compose>\r\n        <compose show.bind=\"!showLogon\" view=\"./components/register.html\"></compose>\r\n    </div>\r\n</template>"; });
-define('text!modules/wall.html', ['module'], function(module) { module.exports = "<template>      \r\n    <div class=\"container\">\r\n        <div id=\"createTodo\" show.bind=\"createNewTodo\">\r\n\r\n            <div class=\"well well-lg marginTop text-center\"><b>${users.selectedUser.screenName}'s TodoList</b>\r\n            \r\n                <span click.trigger=\"cancelCreateTodo()\" class=\"glyphicon glyphicon-ban-circle marginLeft pull-right\"></span>\r\n                <span click.trigger=\"createTodo()\" class=\"glyphicon glyphicon-floppy-disk marginLeft pull-right\"></span>\r\n            </div>\r\n        \r\n                <form class=\"col-sm-12\" id=\"NewTaskForm\">\r\n                        <div class=\"form-group\">\r\n                            <label for=\"inputTask\">Task:</label>\r\n                            <input type=\"text\" class=\"form-control\" id=\"inputTask\" placeholder=\"Enter Task\"\r\n                                value.bind=\"newTodoTask & validate\"/>\r\n                        </div>\r\n                        <div class=\"form-group\">\r\n                            <label for=\"inputDueDate\">Due Date:</label>\r\n                            <input type=\"date\" class=\"form-control\" id=\"inputDueDate\" \r\n                            aria-describedby=\"DueDateHelp\" placeholder=\"Due Date\"\r\n                                value.bind=\"newTodoDueDate| dateFormat:DATE_FORMAT_CONTROL:true & validate\"/>\r\n                        </div>\r\n                      \r\n                        <div class=\"form-group \">\r\n                            <label for=\"inputPriority\">Priority:</label>\r\n                            <select class=\"form-control\" id=\"inputPriority\" value.bind=\"newTodoPriority & validate\">\r\n                               <option model.bind=\"null\">--Select an option--</option>\r\n                               <option repeat.for=\"priority of priorities\" model.bind=\"priority\">${priority}\r\n                               </option>\r\n                            </select>\r\n                        </div>\r\n                        <hr>\r\n                </form>  \r\n            </div>\r\n                \r\n        <div id=\"todoList\" show.bind=\"!createNewTodo\">\r\n            <div class=\"well well-lg marginTop text-center\">\r\n                <b>${users.selectedUser.screenName}'s TodoList</b>\r\n                <span click.trigger=\"logout()\" class=\"glyphicon glyphicon-log-out marginLeft pull-right\"></span>\r\n                <span click.trigger=\"refresh()\" class=\"glyphicon glyphicon-refresh marginLeft pull-right\"></span>\r\n                <span click.trigger=\"createTodoClick()\" class=\"glyphicon glyphicon-plus pull-right\"></span>\r\n            </div>  \r\n\r\n            <div class=\"panel-body\">\r\n                <table class=\"table table-striped \">\r\n                    <thead>\r\n                    <tr>\r\n                        <th>Description</th>\r\n                        <th>Done</th>\r\n                        <th>Due Date</th>\r\n                        <th>Priority</th>\r\n                        <th>Delete</th>\r\n                    </tr>\r\n                    </thead>\r\n                    <tbody>\r\n                        <tr repeat.for=\"todo of todos.todoArray\" if.bind=\"!todo.complete || !hidecomplete\">\r\n                            <td>${todo.task}</td>\r\n                            <td show.bind=\"!todo.complete\"> \r\n                                <input type=\"checkbox\" click.trigger=\"completeTodo(todo)\" /></td>\r\n                            <td show.bind=\"todo.complete\"><span class=\"glyphicon glyphicon-ok\"></td>\r\n                            <td>${todo.duedate| dateFormat:DATE_FORMAT_TABLE:true}</td>\r\n                            <td>${todo.priority}</td>\r\n                            <td><span class=\"glyphicon glyphicon-trash\" click.trigger=\"deleteTask(todo,$index)\"></span></td>\r\n                        </tr>\r\n                    </tbody>\r\n                </table>\r\n                <div class=\"checkbox\">\r\n                    <label>\r\n                    <input type=\"checkbox\" id = \"hidecomplete\" checked.bind = \"hidecomplete\">Hide Completed</input>\r\n                    </label>\r\n                </div>\r\n            </div>\r\n        </div>\r\n    </div>\r\n</template>"; });
+define('text!resources/css/styles.css', ['module'], function(module) { module.exports = ".vertical-align {\r\n    display:flex;\r\n    align-items:center;\r\n}\r\nspan.glyphicon{\r\n    font-size:1em;\r\n}\r\n.marginLeft{\r\n    margin-left: 20px;\r\n}\r\n.marginBottom{\r\n    margin-bottom: 20px;\r\n}\r\n.marginTop{\r\n    margin-top: 20px;\r\n}\r\n.marginRight{\r\n    margin-right: 20px;\r\n}\r\n"; });
+define('text!modules/list.html', ['module'], function(module) { module.exports = "<template>      \r\n    <div class=\"container\">\r\n        <div id=\"createTodo\" show.bind=\"todoSelected\">\r\n                            \r\n            <div class=\"well well-lg marginTop text-center\"><b>${users.selectedUser.screenName}'s TodoList</b>\r\n                    \r\n                <span click.trigger=\"cancelTodoSelection()\" class=\"glyphicon glyphicon-ban-circle marginLeft pull-right\"></span>\r\n                <span click.trigger=\"save()\" class=\"glyphicon glyphicon-floppy-disk marginLeft pull-right\"></span>\r\n            </div>\r\n                          \r\n                <form class=\"col-sm-12\" id=\"NewTaskForm\">\r\n                    <div id=\"errorMsg\" innerhtml.bind=\"saveError\"></div>\r\n                        <div class=\"form-group\">\r\n                            <label for=\"inputTask\">Task:</label>\r\n                            <input type=\"text\" class=\"form-control\" id=\"inputTask\" placeholder=\"Enter Task\"\r\n                                value.bind=\"todos.selectedTodo.task\"/>\r\n                        </div>\r\n                        <div class=\"form-group\">\r\n                            <label for=\"inputDueDate\">Due Date:</label>\r\n                            <input type=\"date\" class=\"form-control\" id=\"inputDueDate\" \r\n                            aria-describedby=\"DueDateHelp\" placeholder=\"Due Date\"\r\n                                value.bind=\"todos.selectedTodo.duedate| dateFormat:DATE_FORMAT_CONTROL:true\"/>\r\n                        </div>\r\n                      \r\n                        <div class=\"form-group \">\r\n                            <label for=\"inputPriority\">Priority:</label>\r\n                            <select class=\"form-control\" id=\"inputPriority\" value.bind=\"todos.selectedTodo.priority\">\r\n                               <option model.bind=\"null\">--Select an option--</option>\r\n                               <option repeat.for=\"priority of priorities\" model.bind=\"priority\">${priority}\r\n                               </option>\r\n                            </select>\r\n                        </div>\r\n                        <hr>\r\n                </form>  \r\n            </div>\r\n                \r\n        <div id=\"todoList\" show.bind=\"!todoSelected\">\r\n            <div class=\"well well-lg marginTop text-center\">\r\n                <b>${users.selectedUser.firstName} ${users.selectedUser.lastName}'s To Do List</b>\r\n                <span click.trigger=\"logout()\" class=\"glyphicon glyphicon-log-out marginLeft pull-right\"></span>\r\n                <span click.trigger=\"refresh()\" class=\"glyphicon glyphicon-refresh marginLeft pull-right\"></span>\r\n                <span click.trigger=\"createTodoClick()\" class=\"glyphicon glyphicon-plus pull-right\"></span>\r\n            </div>  \r\n\r\n            <div class=\"panel-body\">\r\n                <table class=\"table table-striped \">\r\n                    <thead>\r\n                    <tr>\r\n                        <th>Description</th>\r\n                        <th>Done</th>\r\n                        <th>Due Date</th>\r\n                        <th>Priority</th>\r\n                        <th>Delete</th>\r\n                    </tr>\r\n                    </thead>\r\n                    <tbody>\r\n                        <tr repeat.for=\"todo of todos.todoArray\" if.bind=\"!todo.complete || !hidecomplete\">\r\n                            <td style=\"cursor:pointer\" click.trigger=\"edit($index)\">${todo.task}</td>\r\n                            <td><input type=\"checkbox\" id = \"todocomplete\" \r\n                            checked.bind = \"todo.complete\" change.delegate=\"completeTodo(todo)\"/></td>\r\n                            <td>${todo.duedate| dateFormat:DATE_FORMAT_TABLE:true}</td>\r\n                            <td>${todo.priority}</td>\r\n                            <td><span class=\"glyphicon glyphicon-trash\" click.trigger=\"deleteTask(todo,$index)\"></span></td>\r\n                        </tr>\r\n                    </tbody>\r\n                </table>\r\n                <div class=\"checkbox\">\r\n                    <label>\r\n                    <input type=\"checkbox\" id = \"hidecomplete\" checked.bind = \"hidecomplete\">Hide Completed</input>\r\n                    </label>\r\n                </div>\r\n            </div>\r\n        </div>\r\n    </div>\r\n</template>"; });
 define('text!modules/components/login.html', ['module'], function(module) { module.exports = "<template>\r\n        <div class=\"well col-md-4 col-md-offset-4\">   \r\n            <form id=\"form\">\r\n                <div id=\"errorMsg\" innerhtml.bind=\"loginError\"></div>\r\n\r\n                <div class=\"form-group\">\r\n                    <label for=\"email\">Email</label>\r\n                    <input value.bind=\"email\" type=\"email\" autofocus class=\"form-control\" id=\"email\" placeholder=\"Email\"></input>\r\n                </div>\r\n\r\n                <div class=\"form-group\">\r\n                    <label for=\"password\">Password</label>\r\n                    <input value.bind=\"password\" type=\"password\" class=\"form-control\" id=\"password\" placeholder=\"Password\"></input>\r\n                </div>\r\n\r\n                <button class=\"btn btn-primary\" click.trigger='login()'>Login</button>\r\n                <a href=\"\" class=\"text-muted\" click.trigger=\"showRegister()\">Register</a>\r\n\r\n            </form>\r\n        </div>\r\n\r\n</template>"; });
 define('text!modules/components/register.html', ['module'], function(module) { module.exports = "<template>\r\n    <form class=\"col-lg-6 col-lg-offset-3\" id=\"RegistrationForm\">\r\n        <div innerhtml.bind=\"registerError\"></div>\r\n        <div class=\"form-group\">\r\n            <label for=\"exampleInputEmail1\">Email address</label>\r\n            <input type=\"email\" class=\"form-control\" id=\"exampleInputEmail1\"  \r\n            aria-describedby=\"emailHelp\" placeholder=\"Enter email\"\r\n                value.bind=\"email & validate\">\r\n        </div>\r\n        <div class=\"form-group\">\r\n            <label for=\"exampleInputFirstName\">First name</label>\r\n            <input type=\"text\" class=\"form-control\" id=\"exampleInputFirstName\" \r\n            aria-describedby=\"firstNameHelp\" placeholder=\"Enter first name\"\r\n                value.bind=\"firstName & validate\">\r\n        </div>\r\n\r\n        <div class=\"form-group\">\r\n            <label for=\"exampleInputLastName\">Last name</label>\r\n            <input type=\"text\" class=\"form-control\" id=\"exampleInputLastName\" \r\n            aria-describedby=\"lastNameHelp\" placeholder=\"Enter last name\"\r\n                value.bind=\"lastName & validate\">\r\n        </div>\r\n\r\n        <div class=\"form-group\">\r\n            <label for=\"exampleInputScreenName\">Screen name</label>\r\n            <input type=\"text\" class=\"form-control\" id=\"exampleInputScreenName\" \r\n            aria-describedby=\"ScreenNameHelp\" placeholder=\"Enter screen name\"\r\n                value.bind=\"screenName & validate\">\r\n        </div>\r\n\r\n        <div class=\"form-group\">\r\n            <label for=\"exampleInputPassword\">Password</label>\r\n            <input type=\"text\" class=\"form-control\" id=\"exampleInputPassword\" \r\n            aria-describedby=\"PasswordHelp\" placeholder=\"Enter password\"\r\n                value.bind=\"password & validate\">\r\n        </div>\r\n\r\n        <button click.delegate=\"save()\" class=\"btn btn-primary\">Submit</button>\r\n        </form>\r\n</template>"; });
 //# sourceMappingURL=app-bundle.js.map

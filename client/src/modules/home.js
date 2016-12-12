@@ -32,7 +32,7 @@ export class Home
       .then(response => {
           sessionStorage.setItem("user", JSON.stringify(response.user));
           this.loginError = "";
-          this.router.navigate('wall');
+          this.router.navigate('list');
       })
       .catch(error => {
         console.log(error);
@@ -63,6 +63,7 @@ export class Home
       }
     }
   }
+  
 }
 
 ValidationRules  

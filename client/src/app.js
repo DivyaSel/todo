@@ -23,8 +23,8 @@ export class App {
        name:'Home'
      },
      {
-       route: 'wall',
-       moduleId:'./modules/wall',
+       route: 'list',
+       moduleId:'./modules/list',
        name:'Wall',
        auth:true
      }

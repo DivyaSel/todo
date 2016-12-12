@@ -1,29 +1,30 @@
 <template>      
     <div class="container">
-        <div id="createTodo" show.bind="createNewTodo">
-
+        <div id="createTodo" show.bind="todoSelected">
+                            
             <div class="well well-lg marginTop text-center"><b>${users.selectedUser.screenName}'s TodoList</b>
-            
-                <span click.trigger="cancelCreateTodo()" class="glyphicon glyphicon-ban-circle marginLeft pull-right"></span>
-                <span click.trigger="createTodo()" class="glyphicon glyphicon-floppy-disk marginLeft pull-right"></span>
+                    
+                <span click.trigger="cancelTodoSelection()" class="glyphicon glyphicon-ban-circle marginLeft pull-right"></span>
+                <span click.trigger="save()" class="glyphicon glyphicon-floppy-disk marginLeft pull-right"></span>
             </div>
-        
+                          
                 <form class="col-sm-12" id="NewTaskForm">
+                    <div id="errorMsg" innerhtml.bind="saveError"></div>
                         <div class="form-group">
                             <label for="inputTask">Task:</label>
                             <input type="text" class="form-control" id="inputTask" placeholder="Enter Task"
-                                value.bind="newTodoTask & validate"/>
+                                value.bind="todos.selectedTodo.task"/>
                         </div>
                         <div class="form-group">
                             <label for="inputDueDate">Due Date:</label>
                             <input type="date" class="form-control" id="inputDueDate" 
                             aria-describedby="DueDateHelp" placeholder="Due Date"
-                                value.bind="newTodoDueDate| dateFormat:DATE_FORMAT_CONTROL:true & validate"/>
+                                value.bind="todos.selectedTodo.duedate| dateFormat:DATE_FORMAT_CONTROL:true"/>
                         </div>
                       
                         <div class="form-group ">
                             <label for="inputPriority">Priority:</label>
-                            <select class="form-control" id="inputPriority" value.bind="newTodoPriority & validate">
+                            <select class="form-control" id="inputPriority" value.bind="todos.selectedTodo.priority">
                                <option model.bind="null">--Select an option--</option>
                                <option repeat.for="priority of priorities" model.bind="priority">${priority}
                                </option>
@@ -33,9 +34,9 @@
                 </form>  
             </div>
                 
-        <div id="todoList" show.bind="!createNewTodo">
+        <div id="todoList" show.bind="!todoSelected">
             <div class="well well-lg marginTop text-center">
-                <b>${users.selectedUser.screenName}'s TodoList</b>
+                <b>${users.selectedUser.firstName} ${users.selectedUser.lastName}'s To Do List</b>
                 <span click.trigger="logout()" class="glyphicon glyphicon-log-out marginLeft pull-right"></span>
                 <span click.trigger="refresh()" class="glyphicon glyphicon-refresh marginLeft pull-right"></span>
                 <span click.trigger="createTodoClick()" class="glyphicon glyphicon-plus pull-right"></span>
@@ -54,10 +55,9 @@
                     </thead>
                     <tbody>
                         <tr repeat.for="todo of todos.todoArray" if.bind="!todo.complete || !hidecomplete">
-                            <td>${todo.task}</td>
-                            <td show.bind="!todo.complete"> 
-                                <input type="checkbox" click.trigger="completeTodo(todo)" /></td>
-                            <td show.bind="todo.complete"><span class="glyphicon glyphicon-ok"></td>
+                            <td style="cursor:pointer" click.trigger="edit($index)">${todo.task}</td>
+                            <td><input type="checkbox" id = "todocomplete" 
+                            checked.bind = "todo.complete" change.delegate="completeTodo(todo)"/></td>
                             <td>${todo.duedate| dateFormat:DATE_FORMAT_TABLE:true}</td>
                             <td>${todo.priority}</td>
                             <td><span class="glyphicon glyphicon-trash" click.trigger="deleteTask(todo,$index)"></span></td>
